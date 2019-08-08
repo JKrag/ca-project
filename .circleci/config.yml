@@ -1,0 +1,36 @@
+version: 2.0
+jobs:
+  test:
+    docker:
+      - image: circleci/python:2.7  # primary container for the build job
+    steps:
+      - checkout
+      - run:
+          name: dependencies
+          command: pip install --user -r requirements.txt
+      - run:
+          name: Python Test
+          command: python tests.py
+  dockerize:
+    machine: true
+    steps:
+      - checkout
+      # Login to docker
+      - run: docker login -u $DOCKER_USER -p $DOCKER_PASS
+
+      # build the application image
+      - run: docker build -t jkrag/ca .
+
+      # # creates tag
+      # - run: docker tag $DOCKER_USER/app:$CIRCLE_SHA1 $DOCKER_USER/app:latest
+
+      # deploy the image
+      - run: docker push jkrag/ca
+workflows:
+  version: 2
+  myflow:
+    jobs:
+      - test
+      - dockerize:
+          requires:
+            - test
